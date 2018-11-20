@@ -1,9 +1,9 @@
 body {
-  background-color: #ccdde4;
+  background-color: #cccccc;
 }
 .App {
   text-align: center;
-  background-color: #ccdde4;
+  background-color: #cccccc;
 }
 
 
@@ -13,7 +13,7 @@ body {
 }
 
 .App-header {
-  background-color: #ccdde4;
+  background-color: #cccccc;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

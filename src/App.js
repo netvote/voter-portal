@@ -51,7 +51,7 @@ class App extends Component {
           </a>
         </header>  */}
         <Router>
-        <Route path="/" name="Home" component={Login} />
+        <Route path="/email/:electionId" name="Home" component={Login} />
         </Router>
       </div>
     );
