@@ -1,15 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Fade, TextField, Paper, withStyles, Grid, Button, FormControl } from '@material-ui/core';
-import logo from '../../../assets/img/brand/netvote_mark_512.png';
+import { Fade, Paper, withStyles, Grid, Button } from '@material-ui/core';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Send from '@material-ui/icons/Send';
-
 
 //Netvote Settings
 import * as netvote_settings from '../../../config/netvote-settings';
 const nvClient = NetvoteAPIs.initVoterClient(netvote_settings.NETVOTE_API_KEY);
-
 
 const styles = theme => ({
     main: {
@@ -51,13 +48,17 @@ const getMetadata = async (electionId) => {
     return metadata;
 }
 
-class Login extends React.Component {
+class Ballot extends React.Component {
 
     constructor(props) {
         super(props);
         this.electionId = this.props.match.params.electionId;
-        this.submitEmail = this.submitEmail.bind(this);
-        this.updateEmail = this.updateEmail.bind(this);
+        this.token = this.props.match.params.token;
+
+        console.log('Election Id: ' + this.electionId);
+        console.log('Token: ' + this.token);
+        
+        this.submitBallot = this.submitBallot.bind(this);
 
         getMetadata(this.electionId).then((metadata) => {
             this.setState( { 
@@ -72,42 +73,59 @@ class Login extends React.Component {
     state = {
         showForm: false,
         email: "",
-        message: `Please enter your email address to receive your secure ballot link.`,
+        message: ``,
         metadata: {
             ballotTitle: "Loading..."
         }
     }
 
-    submitEmail() {
-        //TODO: validate email address
-        nvClient.VerifyEmail(this.electionId, this.state.email).then((res) => {
-            // res.message will be something if not valid
-            this.setState({
-                message: res.message
-            })
-            console.log(res);
+    //TODO: Hardcoded - need to render Vote based on dynamic Ballot Form entries
+    submitBallot = async () => {
+        let voteObject = {
+            ballotVotes: [
+                {
+                    choices: [
+                        {
+                            selection: 0
+                        },
+                        {
+                            selection: 0
+                        },
+                        {
+                            selection: 0
+                        }
+                    ]
+                }
+            ]
+        }
 
-        })
+        //Delayed fire for performance improvement
+        setTimeout( () => { 
+            this.setState({  message: 'Sending vote'});
+
+            nvClient.CastSignedVote(this.electionId,this.token, voteObject).then((res) => {
+            if(res.txStatus === "complete" || res.txStatus === "pending"){
+                // everything is good
+                console.log('Vote Status: ' + res.txStatus);
+                this.setState({  message: 'Vote sent'});
+                // this.setState({  message: 'Vote Status: ' + res.txStatus});
+            } else {
+                // an error occured, or vote is a duplicate
+                console.log('Vote Error: ' + res.message);
+                this.setState({  message: 'Vote Error: ' + res.message});
+            }
+        }) }, 10);
+      
     }
-
-    updateEmail(event){
-        console.log(event.target.value);
-        this.setState({email: event.target.value})
-    }
-        
-
+  
     render() {
         
         const { classes } = this.props;
         // const { state } = this.state;
 
-        //TODO: ideally have a nice transition while loading metadata
-        //TODO: if election does not have authType=="email", then give error page
         return (
             <main className={classes.main}>
-                {/* <CssBaseline /> */}
                 
-
                 <Paper className={classes.paper}>
                 <Grid
                     container
@@ -116,45 +134,35 @@ class Login extends React.Component {
                     alignItems="center"
                     style={{margin: "20px"}} 
                     >
-                    <Grid justify="center" container spacing={8}>
+                    <Grid justify="center" container spacing={24}>
                         <Grid item>
-                            <img src={logo} justify="left" alt="logo" width="75" height="75" />
+                            <img src={this.state.metadata.featuredImage} alt="" justify="center" width="100%" height="100%" />
                         </Grid>
                     </Grid>
                     <Fade in={this.state.showForm}>
                         <Grid container>
-                            <Grid style={{margin: "2px"}} justify="center" container spacing={0}>
-                            <p align="left" style={{ fontSize: "1.6rem" }}>
+                            <Grid style={{margin: "2px"}} justify="center" container spacing={8}>
+                                <p align="center" style={{ fontSize: "1.5rem" }}>
                                     { this.state.metadata.ballotTitle }
                                 </p>
+                                <p align="center" style={{ fontSize: ".8rem" }}>
+                                    { this.state.metadata.description }
+                                </p>
                             </Grid>
-                            <Grid style={{margin: "20px"}} justify="center" container spacing={8}>
-                            <p align="left" style={{ fontSize: "1.0rem" }}>
-                            For your security, this election requires email verification.<br/><br/>
-                            </p>
-                            <p align="left" style={{ fontSize: "1.0rem" }}>
-                            { this.state.message }
-                            </p>
+                            <Grid style={{margin: "2px"}} justify="center" container spacing={8}>
+                                <p align="center" variant="subtitle1"  style={{ fontWeight: "bold", color: "#22b1dd" }}>
+                                    { this.state.message }
+                                </p>
                             </Grid>
                             <form className={classes.form}>
-                                <FormControl margin="normal" required fullWidth>
-                                    {/* <InputLabel htmlFor="email">Email</InputLabel> */}
-                                    <TextField
-                                        id="email"
-                                        label="Email Address"
-                                        className={classes.textField}
-                                        margin="normal"
-                                        onChange={this.updateEmail}
-                                        />
-                                </FormControl>
                                 <Button
                                     variant="contained"
                                     color="primary"
                                     size="large"
-                                    onClick={this.submitEmail}
+                                    onClick={this.submitBallot}
                                     className={classes.submit}
                                 >
-                                    Send Verification Email
+                                    Send Vote
                                     <Send className={classes.rightIcon}/>
                                 </Button>
                             </form>
@@ -167,8 +175,8 @@ class Login extends React.Component {
     }
 }
 
-Login.propTypes = {
+Ballot.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Login);
+export default withStyles(styles)(Ballot);

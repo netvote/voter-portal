@@ -1,18 +1,19 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
+import { Switch, HashRouter as Router, Route, Link } from 'react-router-dom'
 import './App.css';
-import logo from './assets/img/brand/netvote_mark_512.png';
-
 
 //Custom CitizenData Login Pages
 import Login from './views/Pages/Login';
-
+import Ballot from './views/Pages/Ballot';
 class App extends Component {
   render() {
     return (
       <div className="App">
         <Router>
-        <Route path="/email/:electionId" name="Home" component={Login} />
+          <Switch>
+            <Route path="/email/:electionId" name="Home" component={Login} />
+            <Route path="/ballot/:electionId/:token" name="Ballot" component={Ballot} />
+          </Switch>
         </Router>
       </div>
     );
