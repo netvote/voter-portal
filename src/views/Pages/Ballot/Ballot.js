@@ -1,8 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Fade, Paper, withStyles, Grid, Button } from '@material-ui/core';
+import { Typography, Fade, Paper, withStyles, Grid, Button } from '@material-ui/core';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Send from '@material-ui/icons/Send';
+import * as Survey from "survey-react";
+import "survey-react/survey.css";
 
 //Netvote Settings
 import * as netvote_settings from '../../../config/netvote-settings';
@@ -15,8 +17,8 @@ const styles = theme => ({
         marginTop: 'auto',
         marginLeft: theme.spacing.unit * 3,
         marginRight: theme.spacing.unit * 3,
-        [theme.breakpoints.up(400 + theme.spacing.unit * 3 * 2)]: {
-            width: 400,
+        [theme.breakpoints.up(800 + theme.spacing.unit * 3 * 2)]: {
+            width: 800,
             marginLeft: 'auto',
             marginRight: 'auto',
         },
@@ -45,7 +47,46 @@ const getMetadata = async (electionId) => {
     let election = await nvClient.GetElection(electionId);
     let hash = election.props.metadataLocation;
     let metadata = await nvClient.GetFromIPFS(hash);
-    return metadata;
+
+    let results = {
+        questions: [],
+        metadata: metadata,
+        nvQuestions: []
+    };
+
+    let questionIdx = 0;
+    for(let j=0; j<metadata.ballotGroups.length; j++){
+        let ballotGroup = metadata.ballotGroups[j];
+        for(let i=0; i<ballotGroup.ballotSections.length; i++){
+            let section = ballotGroup.ballotSections[i];
+
+            let question = {
+                type: "radiogroup",
+                name: `${questionIdx++}`,
+                title: section.sectionTitle,
+                isRequired: true,
+                colCount: 1,
+                choices: []
+            }
+            for(let k=0; k<section.ballotItems.length; k++){
+                let choice = section.ballotItems[k];
+                question.choices.push(choice.itemTitle)
+            }
+            results.questions.push(question);
+            results.nvQuestions.push(section);
+        }
+    }
+
+    return results;
+}
+
+const getIndexOfChoice = (section, choiceTxt) => {
+    for(let i=0; i<section.ballotItems.length; i++){
+        if(section.ballotItems[i].itemTitle == choiceTxt){
+            return i;
+        }
+    }
+    throw new Error(`Cannot find ${choiceTxt} choice in ${section.sectionTitle}`)
 }
 
 class Ballot extends React.Component {
@@ -57,20 +98,29 @@ class Ballot extends React.Component {
 
         console.log('Election Id: ' + this.electionId);
         console.log('Token: ' + this.token);
-        
-        this.submitBallot = this.submitBallot.bind(this);
 
-        getMetadata(this.electionId).then((metadata) => {
-            this.setState( { 
-                metadata: metadata,
+        this.submitBallot = this.submitBallot.bind(this);
+        this.onComplete = this.onComplete.bind(this);
+
+
+        getMetadata(this.electionId).then((surveyObj) => {
+
+            this.setState({
+                model: new Survey.Model({  	title: surveyObj.metadata.ballotTitle, completedHtml: "Your vote is recorded", questions: surveyObj.questions}),
+                metadata: surveyObj.metadata,
+                nvQuestions: surveyObj.nvQuestions,
                 showForm: true
-            } );
-            
-            console.log(metadata);
+            });
+
+            console.log(surveyObj);
         })
     }
 
     state = {
+        model: new Survey.Model({
+            elements: []
+        }),
+        nvQuestions: [],
         showForm: false,
         email: "",
         message: ``,
@@ -99,77 +149,57 @@ class Ballot extends React.Component {
             ]
         }
 
-        //Delayed fire for performance improvement
-        setTimeout( () => { 
-            this.setState({  message: 'Sending vote'});
-
-            nvClient.CastSignedVote(this.electionId,this.token, voteObject).then((res) => {
-            if(res.txStatus === "complete" || res.txStatus === "pending"){
-                // everything is good
-                console.log('Vote Status: ' + res.txStatus);
-                this.setState({  message: 'Vote sent'});
-                // this.setState({  message: 'Vote Status: ' + res.txStatus});
-            } else {
-                // an error occured, or vote is a duplicate
-                console.log('Vote Error: ' + res.message);
-                this.setState({  message: 'Vote Error: ' + res.message});
-            }
-        }) }, 10);
-      
-    }
-  
-    render() {
         
+
+    }
+
+    async onComplete(survey, options) {
+        //Write survey results into database
+        console.log("Survey results: " + JSON.stringify(survey.data));
+
+        let choices = [];
+        for(let i=0; i<this.state.nvQuestions.length; i++){
+            let choiceName = survey.data[`${i}`];
+            let idx = getIndexOfChoice(this.state.nvQuestions[i], choiceName);
+            choices.push({
+                selection: idx
+            })
+        }
+
+        let vote = {
+            ballotVotes: [{
+                choices: choices
+            }]
+        }
+
+        //Delayed fire for performance improvement
+        this.setState({ message: 'Sending vote' });
+
+        let res = await nvClient.CastSignedVote(this.electionId, this.token, vote);
+        if (res.txStatus === "complete" || res.txStatus === "pending") {
+            // everything is good
+            console.log('Vote Status: ' + res.txStatus);
+            // this.setState({  message: 'Vote Status: ' + res.txStatus});
+        } else {
+            // an error occured, or vote is a duplicate
+            console.log('Vote Error: ' + res.message);
+        }
+    }
+
+    render() {
+
         const { classes } = this.props;
         // const { state } = this.state;
 
         return (
             <main className={classes.main}>
-                
-                <Paper className={classes.paper}>
-                <Grid
-                    container
-                    direction="row"
-                    justify="center"
-                    alignItems="center"
-                    style={{margin: "20px"}} 
-                    >
-                    <Grid justify="center" container spacing={24}>
-                        <Grid item>
-                            <img src={this.state.metadata.featuredImage} alt="" justify="center" width="100%" height="100%" />
-                        </Grid>
-                    </Grid>
-                    <Fade in={this.state.showForm}>
-                        <Grid container>
-                            <Grid style={{margin: "2px"}} justify="center" container spacing={8}>
-                                <p align="center" style={{ fontSize: "1.5rem" }}>
-                                    { this.state.metadata.ballotTitle }
-                                </p>
-                                <p align="center" style={{ fontSize: ".8rem" }}>
-                                    { this.state.metadata.description }
-                                </p>
-                            </Grid>
-                            <Grid style={{margin: "2px"}} justify="center" container spacing={8}>
-                                <p align="center" variant="subtitle1"  style={{ fontWeight: "bold", color: "#22b1dd" }}>
-                                    { this.state.message }
-                                </p>
-                            </Grid>
-                            <form className={classes.form}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="large"
-                                    onClick={this.submitBallot}
-                                    className={classes.submit}
-                                >
-                                    Send Vote
-                                    <Send className={classes.rightIcon}/>
-                                </Button>
-                            </form>
-                        </Grid>
-                    </Fade>
+                <Fade in={this.state.showForm}>
+                <Grid container>
+                <Grid container style={{textAlign:"left"}}>
+                    <Survey.Survey model={this.state.model} onComplete={this.onComplete}/>
                 </Grid>
-                </Paper>
+                </Grid>
+                </Fade>
             </main>
         );
     }

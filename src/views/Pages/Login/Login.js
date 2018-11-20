@@ -128,10 +128,10 @@ class Login extends React.Component {
                             </Typography>
                             </Grid>
                             <Grid style={{margin: "20px"}} justify="center" container spacing={8}>
-                            <Typography align="left" variant="subtitle1">
+                            <Typography align="left">
                                 For your security, this election requires email verification.<br/><br/>
                             </Typography>
-                            <Typography align="left" variant="subtitle1">
+                            <Typography align="left">
                                 { this.state.message }
                             </Typography>
                             </Grid>
