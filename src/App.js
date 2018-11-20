@@ -7,6 +7,8 @@ import Login from './views/Pages/Login';
 import Ballot from './views/Pages/Ballot';
 class App extends Component {
   render() {
+    window.__MUI_USE_NEXT_TYPOGRAPHY_VARIANTS__ = true;
+
     return (
       <div className="App">
         <Router>

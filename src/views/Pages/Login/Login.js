@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Fade, TextField, Paper, withStyles, Grid, Button, FormControl } from '@material-ui/core';
+import { Typography, Fade, TextField, Paper, withStyles, Grid, Button, FormControl } from '@material-ui/core';
 import logo from '../../../assets/img/brand/netvote_mark_512.png';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Send from '@material-ui/icons/Send';
@@ -36,7 +36,6 @@ const styles = theme => ({
     },
     form: {
         width: '100%', // Fix IE 11 issue.
-        marginTop: theme.spacing.unit,
         disableUnderline: true
     },
     submit: {
@@ -124,20 +123,20 @@ class Login extends React.Component {
                     <Fade in={this.state.showForm}>
                         <Grid container>
                             <Grid style={{margin: "2px"}} justify="center" container spacing={0}>
-                            <p align="left" style={{ fontSize: "1.6rem" }}>
-                                    { this.state.metadata.ballotTitle }
-                                </p>
+                            <Typography align="left" variant="h6">
+                                { this.state.metadata.ballotTitle }
+                            </Typography>
                             </Grid>
                             <Grid style={{margin: "20px"}} justify="center" container spacing={8}>
-                            <p align="left" style={{ fontSize: "1.0rem" }}>
-                            For your security, this election requires email verification.<br/><br/>
-                            </p>
-                            <p align="left" style={{ fontSize: "1.0rem" }}>
-                            { this.state.message }
-                            </p>
+                            <Typography align="left" variant="subtitle1">
+                                For your security, this election requires email verification.<br/><br/>
+                            </Typography>
+                            <Typography align="left" variant="subtitle1">
+                                { this.state.message }
+                            </Typography>
                             </Grid>
                             <form className={classes.form}>
-                                <FormControl margin="normal" required fullWidth>
+                                <FormControl required fullWidth>
                                     {/* <InputLabel htmlFor="email">Email</InputLabel> */}
                                     <TextField
                                         id="email"
