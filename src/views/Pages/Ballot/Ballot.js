@@ -10,6 +10,25 @@ import "survey-react/survey.css";
 import * as netvote_settings from '../../../config/netvote-settings';
 const nvClient = NetvoteAPIs.initVoterClient(netvote_settings.NETVOTE_API_KEY);
 
+
+var defaultThemeColors = Survey
+    .StylesManager
+    .ThemeColors["default"];
+
+
+defaultThemeColors["$main-color"] = "#0daa9d";
+defaultThemeColors["$main-hover-color"] = "#0daa9dc2";
+defaultThemeColors["$text-color"] = "#4a4a4a";
+defaultThemeColors["$header-color"] = "#ffffff";
+
+defaultThemeColors["$header-background-color"] = "#0daa9d";
+defaultThemeColors["$body-container-background-color"] = "#f8f8f8";
+
+Survey
+    .StylesManager
+    .applyTheme();
+
+
 const styles = theme => ({
     main: {
         width: 'auto',
@@ -89,6 +108,24 @@ const getIndexOfChoice = (section, choiceTxt) => {
     throw new Error(`Cannot find ${choiceTxt} choice in ${section.sectionTitle}`)
 }
 
+const submitVote = (electionId, token, vote) => {
+    
+    return new Promise((resolve, reject) => {
+        setTimeout(async function(){
+            let res = await nvClient.CastSignedVote(electionId, token, vote);
+            if (res.txStatus === "complete" || res.txStatus === "pending") {
+                // everything is good
+                resolve(res.txStatus)
+                // this.setState({  message: 'Vote Status: ' + res.txStatus});
+            } else {
+                // an error occured, or vote is a duplicate
+                reject(res.message)
+            }
+
+        }, 10)
+    })
+}
+
 class Ballot extends React.Component {
 
     constructor(props) {
@@ -148,9 +185,6 @@ class Ballot extends React.Component {
                 }
             ]
         }
-
-        
-
     }
 
     async onComplete(survey, options) {
@@ -172,18 +206,7 @@ class Ballot extends React.Component {
             }]
         }
 
-        //Delayed fire for performance improvement
-        this.setState({ message: 'Sending vote' });
-
-        let res = await nvClient.CastSignedVote(this.electionId, this.token, vote);
-        if (res.txStatus === "complete" || res.txStatus === "pending") {
-            // everything is good
-            console.log('Vote Status: ' + res.txStatus);
-            // this.setState({  message: 'Vote Status: ' + res.txStatus});
-        } else {
-            // an error occured, or vote is a duplicate
-            console.log('Vote Error: ' + res.message);
-        }
+        await submitVote(this.electionId, this.token, vote);
     }
 
     render() {
