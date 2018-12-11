@@ -144,6 +144,7 @@ class Ballot extends React.Component {
         showForm: false,
         email: "",
         message: `Please wait...`,
+        messageColor: 'green',
         metadata: {
             ballotTitle: "Loading..."
         },
@@ -188,15 +189,14 @@ class Ballot extends React.Component {
         try {
             //Successful vote submission
             res = await this.submitVote(this.electionId, this.token, vote);
-            this.setState({ complete: true, message: 'Vote Status: ' + res.txStatus });
-
-            //TODO: Add success page w/ branded header or modal
+            console.log('Vote Status: ' + res.txStatus);
+            // this.setState({ complete: true, message: 'Vote Status: ' + res.txStatus });
+            this.setState({ complete: true, messageColor: '#6d7072', message: 'We have successfully recorded your vote.  You may now close this browser window'});
 
         } catch (err) {
             //Vote submission failure 
-            this.setState({ complete: true, message: 'Vote Error: ' + err });
-
-            //TODO: Add error page w/ branded header or modal
+            console.log('Vote Error: ' + err);
+            this.setState({ complete: true, messageColor: 'red', message: 'Vote Error: ' + err });
         }
     }
 
@@ -215,7 +215,8 @@ class Ballot extends React.Component {
                                 <div className="sv_header">
                                     <h2><span style={{ fontSize: "2em", fontWeight: "300", textAlign: "left", margin: "0" }}>{this.state.metadata.ballotTitle}</span></h2>
                                 </div>
-                                <h3 style={{ fontWeight: "bold", color: "red" }}><span>{this.state.message}</span></h3>
+                                <div style={{color:this.state.messageColor }} className="sv_body sv_completed_page">{this.state.message}</div>
+                                {/* <h3 style={{ fontWeight: "bold", color:this.state.messageColor }}><span>{this.state.message}</span></h3> */}
                             </div>
                         </form>
                     </div>
