@@ -206,20 +206,35 @@ class Ballot extends React.Component {
         // const { state } = this.state;
 
         if (this.state.complete) {
-            return <h1 style={{ fontWeight: "bold", color: "red" }}>{this.state.message}</h1>;
-        }
+            return (
+                <main className={classes.main}>
+                    <div className="sv_main sv_default_css">
+                        <form>
+                            <div className="sv_custom_header"></div>
+                            <div className="sv_container">
+                                <div className="sv_header">
+                                    <h2><span style={{ fontSize: "2em", fontWeight: "300", textAlign: "left", margin: "0" }}>{this.state.metadata.ballotTitle}</span></h2>
+                                </div>
+                                <h3 style={{ fontWeight: "bold", color: "red" }}><span>{this.state.message}</span></h3>
+                            </div>
+                        </form>
+                    </div>
+                </main >
+            );
+        } else {
 
-        return (
-            <main className={classes.main}>
-                <Fade in={this.state.showForm}>
-                    <Grid container>
-                        <Grid container style={{ textAlign: "left" }}>
-                            <Survey.Survey model={this.state.model} onComplete={this.onComplete} />
+            return (
+                <main className={classes.main}>
+                    <Fade in={this.state.showForm}>
+                        <Grid container>
+                            <Grid container style={{ textAlign: "left" }}>
+                                <Survey.Survey model={this.state.model} onComplete={this.onComplete} />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </Fade>
-            </main>
-        );
+                    </Fade>
+                </main>
+            );
+        }
     }
 }
 
