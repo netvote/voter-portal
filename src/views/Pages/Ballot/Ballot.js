@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Typography, Fade, Paper, withStyles, Grid, Button } from '@material-ui/core';
+import { Fade, withStyles, Grid } from '@material-ui/core';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
-import Send from '@material-ui/icons/Send';
+// import Send from '@material-ui/icons/Send';
 import * as Survey from "survey-react";
 import "survey-react/survey.css";
 
@@ -74,9 +74,9 @@ const getMetadata = async (electionId) => {
     };
 
     let questionIdx = 0;
-    for(let j=0; j<metadata.ballotGroups.length; j++){
+    for (let j = 0; j < metadata.ballotGroups.length; j++) {
         let ballotGroup = metadata.ballotGroups[j];
-        for(let i=0; i<ballotGroup.ballotSections.length; i++){
+        for (let i = 0; i < ballotGroup.ballotSections.length; i++) {
             let section = ballotGroup.ballotSections[i];
 
             let question = {
@@ -87,7 +87,7 @@ const getMetadata = async (electionId) => {
                 colCount: 1,
                 choices: []
             }
-            for(let k=0; k<section.ballotItems.length; k++){
+            for (let k = 0; k < section.ballotItems.length; k++) {
                 let choice = section.ballotItems[k];
                 question.choices.push(choice.itemTitle)
             }
@@ -100,31 +100,14 @@ const getMetadata = async (electionId) => {
 }
 
 const getIndexOfChoice = (section, choiceTxt) => {
-    for(let i=0; i<section.ballotItems.length; i++){
-        if(section.ballotItems[i].itemTitle == choiceTxt){
+    for (let i = 0; i < section.ballotItems.length; i++) {
+        if (section.ballotItems[i].itemTitle === choiceTxt) {
             return i;
         }
     }
     throw new Error(`Cannot find ${choiceTxt} choice in ${section.sectionTitle}`)
 }
 
-const submitVote = (electionId, token, vote) => {
-    
-    return new Promise((resolve, reject) => {
-        setTimeout(async function(){
-            let res = await nvClient.CastSignedVote(electionId, token, vote);
-            if (res.txStatus === "complete" || res.txStatus === "pending") {
-                // everything is good
-                resolve(res.txStatus)
-                // this.setState({  message: 'Vote Status: ' + res.txStatus});
-            } else {
-                // an error occured, or vote is a duplicate
-                reject(res.message)
-            }
-
-        }, 10)
-    })
-}
 
 class Ballot extends React.Component {
 
@@ -136,17 +119,17 @@ class Ballot extends React.Component {
         console.log('Election Id: ' + this.electionId);
         console.log('Token: ' + this.token);
 
-        this.submitBallot = this.submitBallot.bind(this);
         this.onComplete = this.onComplete.bind(this);
-
+        this.submitVote = this.submitVote.bind(this);
 
         getMetadata(this.electionId).then((surveyObj) => {
-
             this.setState({
-                model: new Survey.Model({  	title: surveyObj.metadata.ballotTitle, completedHtml: "Your vote is recorded", questions: surveyObj.questions}),
+                // To Suppress completed page add --> showCompletedPage: false
+                model: new Survey.Model({ title: surveyObj.metadata.ballotTitle, completedHtml: "Please wait, Your vote is being recorded...", questions: surveyObj.questions }),
                 metadata: surveyObj.metadata,
                 nvQuestions: surveyObj.nvQuestions,
-                showForm: true
+                showForm: true,
+                complete: false
             });
 
             console.log(surveyObj);
@@ -160,39 +143,33 @@ class Ballot extends React.Component {
         nvQuestions: [],
         showForm: false,
         email: "",
-        message: ``,
+        message: `Please wait...`,
         metadata: {
             ballotTitle: "Loading..."
-        }
+        },
+        complete: false
     }
 
-    //TODO: Hardcoded - need to render Vote based on dynamic Ballot Form entries
-    submitBallot = async () => {
-        let voteObject = {
-            ballotVotes: [
-                {
-                    choices: [
-                        {
-                            selection: 0
-                        },
-                        {
-                            selection: 0
-                        },
-                        {
-                            selection: 0
-                        }
-                    ]
+    submitVote(electionId, token, vote) {
+
+        return new Promise((resolve, reject) => {
+            setTimeout(async function () {
+                let res = await nvClient.CastSignedVote(electionId, token, vote);
+                if (res.txStatus === "complete" || res.txStatus === "pending") {
+                    // everything is good
+                    resolve(res.txStatus)
+                } else {
+                    // an error occured, or vote is a duplicate
+                    reject(res.message)
                 }
-            ]
-        }
+
+            }, 10)
+        })
     }
 
     async onComplete(survey, options) {
-        //Write survey results into database
-        console.log("Survey results: " + JSON.stringify(survey.data));
-
         let choices = [];
-        for(let i=0; i<this.state.nvQuestions.length; i++){
+        for (let i = 0; i < this.state.nvQuestions.length; i++) {
             let choiceName = survey.data[`${i}`];
             let idx = getIndexOfChoice(this.state.nvQuestions[i], choiceName);
             choices.push({
@@ -206,7 +183,21 @@ class Ballot extends React.Component {
             }]
         }
 
-        await submitVote(this.electionId, this.token, vote);
+        let res;
+
+        try {
+            //Successful vote submission
+            res = await this.submitVote(this.electionId, this.token, vote);
+            this.setState({ complete: true, message: 'Vote Status: ' + res.txStatus });
+
+            //TODO: Add success page w/ branded header or modal
+
+        } catch (err) {
+            //Vote submission failure 
+            this.setState({ complete: true, message: 'Vote Error: ' + err });
+
+            //TODO: Add error page w/ branded header or modal
+        }
     }
 
     render() {
@@ -214,14 +205,18 @@ class Ballot extends React.Component {
         const { classes } = this.props;
         // const { state } = this.state;
 
+        if (this.state.complete) {
+            return <h1 style={{ fontWeight: "bold", color: "red" }}>{this.state.message}</h1>;
+        }
+
         return (
             <main className={classes.main}>
                 <Fade in={this.state.showForm}>
-                <Grid container>
-                <Grid container style={{textAlign:"left"}}>
-                    <Survey.Survey model={this.state.model} onComplete={this.onComplete}/>
-                </Grid>
-                </Grid>
+                    <Grid container>
+                        <Grid container style={{ textAlign: "left" }}>
+                            <Survey.Survey model={this.state.model} onComplete={this.onComplete} />
+                        </Grid>
+                    </Grid>
                 </Fade>
             </main>
         );
