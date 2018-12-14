@@ -1,0 +1,6 @@
+{
+  "name": "ExpiredError",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./ExpiredError.js"
+}
