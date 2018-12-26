@@ -1,0 +1,6 @@
+{
+  "name": "ElectionResults",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./ElectionResults.js"
+}

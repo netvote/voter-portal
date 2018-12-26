@@ -9,6 +9,8 @@ import Ballot from './views/Pages/Ballot';
 //Error Handling Pages
 import ExpiredError from './views/Pages/ExpiredError';
 
+import ElectionResults from './views/Pages/Results';
+
 class App extends Component {
   render() {
     window.__MUI_USE_NEXT_TYPOGRAPHY_VARIANTS__ = true;
@@ -18,8 +20,10 @@ class App extends Component {
         <Router>
           <Switch>
             <Route path="/email/:electionId" name="Home" component={Login} />
+            <Route path="/election/:electionId" name="Home" component={Login} />
             <Route path="/ballot/:electionId/:token" name="Ballot" component={Ballot} />
             <Route path="/error/Expired" name="Expired" component={ExpiredError} />
+            <Route path="/results/:electionId" name="Results" component={ElectionResults} />
           </Switch>
         </Router>
       </div>
