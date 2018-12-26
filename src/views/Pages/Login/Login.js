@@ -188,7 +188,7 @@ class Login extends React.Component {
                     >
                         <Fade in={this.state.showForm}>
                             <Grid container>
-                                <Card style={{ margin: "30px", background: "#f7f7f7" }} justify="center">
+                                <Card style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
                                     <CardContent justify="center">
                                         <Grid justify="center" container spacing={8}>
                                             <Grid item>
