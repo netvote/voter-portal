@@ -46,6 +46,7 @@ class ElectionResults extends React.Component {
 
 
         this.renderElectionResultsByIndex = this.renderElectionResultsByIndex.bind(this);
+        this.getRawResults = this.getRawResults.bind(this);
 
         this.electionId = this.props.match.params.electionId;
     }
@@ -77,6 +78,20 @@ class ElectionResults extends React.Component {
         console.log('electionGetResults(): ', electionGetResults);
 
         return electionGetResults;
+    }
+
+    getRawResults(results) {
+        let items = [];
+
+        let electionResults = results.ballots[results.election].results.ALL;
+        
+        electionResults.forEach(function (element) {
+            items.push(element);
+        });
+
+        console.log('Raw Results: ', items);
+
+        return items;
     }
 
     renderElectionResultsByIndex(_index) {
@@ -164,13 +179,15 @@ class ElectionResults extends React.Component {
                 // Makeshift election results rendering
                 let allResults = res.txResult.results;
 
-                let allSectionTitles = this.getSectionTitles(res.txResult.results);
+                // this.getRawResults(allResults);
+
+                let allSectionTitles = this.getSectionTitles(allResults);
 
                 this.setState({
                     title: "Votes Cast " + votesCast,
                     electionResults: allResults,
                     electionSections: allSectionTitles,
-                    message: ""//JSON.stringify(res.txResult.results.ballots[res.txResult.results.election].results.ALL),
+                    message: ""
                 });
 
             } else {
