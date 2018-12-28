@@ -104,7 +104,7 @@ class ElectionResults extends React.Component {
                 }
             }
 
-            items.push(`${value} - ${itemDescription} [Total Votes: ${count}]  `);
+            items.push(`${value} - ${itemDescription} [Votes: ${count}]  `);
         }
 
         return items;
@@ -222,7 +222,7 @@ class ElectionResults extends React.Component {
                         <Fade in={true}>
                             <Grid container>
                                 <Grid style={{ margin: "2px" }} justify="center" container spacing={0}>
-                                    <Typography align="center" variant="h6" >
+                                    <Typography style={{ color: "#00b3a7" }} align="center" variant="h6" >
                                         {this.state.metadata.ballotTitle}
                                     </Typography>
                                 </Grid>
@@ -240,8 +240,8 @@ class ElectionResults extends React.Component {
                                 <Grid style={{ margin: "2px" }} justify="center" container spacing={0}>
                                     <Typography align="center" component={'span'} color="primary">
                                         {this.state.electionSections.map(function (value, index) {
-                                            return <Card key={index} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
-                                                <CardHeader title={value} subheader="" />
+                                            return <Card key={index} style={{ margin: "28px", background: "#eceaea" }} justify="center">
+                                                <CardHeader style={{ color: "#ffffffde", background: "#95dad5" }} title={value} subheader="" />
 
                                                 {this.renderElectionResultsByIndex(index).map(function (val, idx) {
                                                     return <Card key={idx} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
