@@ -3,6 +3,9 @@ import PropTypes from 'prop-types';
 import { Typography, Fade, Paper, withStyles, Grid } from '@material-ui/core';
 import logo from '../../../assets/img/brand/netvote_mark_512.png';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
 
 //Netvote Settings
 import * as netvote_settings from '../../../config/netvote-settings';
@@ -38,6 +41,12 @@ class ElectionResults extends React.Component {
 
     constructor(props) {
         super(props);
+        // this.renderElectionResults = this.renderElectionResults.bind(this);
+        this.getSectionTitles = this.getSectionTitles.bind(this);
+
+
+        this.renderElectionResultsByIndex = this.renderElectionResultsByIndex.bind(this);
+
         this.electionId = this.props.match.params.electionId;
     }
 
@@ -70,6 +79,49 @@ class ElectionResults extends React.Component {
         return electionGetResults;
     }
 
+    renderElectionResultsByIndex(_index) {
+
+        let items = [], itemDescription;
+
+        let results = this.state.electionResults;
+
+        let electionResults = results.ballots[results.election].results.ALL[_index];
+
+        let decisionMetadata = results.ballots[results.election].decisionMetadata;
+
+        const entries = Object.entries(electionResults)
+
+        for (const [value, count] of entries) {
+
+            //Determine ballot description
+            const ballotItems = Object.values(decisionMetadata[_index].ballotItems);
+
+            for (const ballotValue of ballotItems) {
+
+                if (ballotValue["itemTitle"] === value) {
+                    itemDescription = ballotValue["itemDescription"] || "";
+                    break;
+                }
+            }
+
+            items.push(`${value} - ${itemDescription} [Total Votes: ${count}]  `);
+        }
+
+        return items;
+    }
+
+    getSectionTitles(results) {
+
+        let items = [];
+
+        let decisionMetadata = results.ballots[results.election].decisionMetadata;
+
+        decisionMetadata.forEach(function (element) {
+            items.push(element.sectionTitle);
+        });
+
+        return items;
+    }
 
     componentDidMount = async () => {
 
@@ -91,7 +143,7 @@ class ElectionResults extends React.Component {
 
         //Election redirect check
         if (this.state.electionStatus === 'closed') {
-            
+
             this.setState({
                 title: 'Gathering results...',
             });
@@ -101,24 +153,32 @@ class ElectionResults extends React.Component {
 
             // poll for 60 seconds
             let res = await nvClient.PollJob(job.jobId, 60000);
-            
-            console.log(res);
-            console.log(res.txResult.results);
-            
+
+            //Votes Cast
+            let votesCast = res.txResult.results.ballots[res.txResult.results.election].totalVotes || 0;
+
+            console.log("Election Query Response: ", res);
+
             if (res.txStatus === "complete") {
                 // everything is good
-                //TODO: Properly render the results data!!
+                // Makeshift election results rendering
+                let allResults = res.txResult.results;
+
+                let allSectionTitles = this.getSectionTitles(res.txResult.results);
+
                 this.setState({
-                    title: 'Results',
-                    message: JSON.stringify(res.txResult.results),        
+                    title: "Votes Cast " + votesCast,
+                    electionResults: allResults,
+                    electionSections: allSectionTitles,
+                    message: ""//JSON.stringify(res.txResult.results.ballots[res.txResult.results.election].results.ALL),
                 });
-                
+
             } else {
 
                 // an error occured, or vote is a duplicate
                 this.setState({
                     title: "Error",
-                    message: "Unable to retrieve election results at this time.",        
+                    message: "Unable to retrieve election results at this time.",
                 });
             }
 
@@ -131,10 +191,13 @@ class ElectionResults extends React.Component {
 
     state = {
         title: '',
+        electionSections: [],
         message: '',
         metadata: {
             ballotTitle: "Please wait..."
-        }
+        },
+        electionResults: [],
+
     }
 
     render() {
@@ -164,7 +227,7 @@ class ElectionResults extends React.Component {
                                     </Typography>
                                 </Grid>
                                 <Grid style={{ margin: "2px" }} justify="center" container spacing={0}>
-                                    <Typography align="center" variant="h6">
+                                    <Typography align="center" color="textSecondary" variant="h6">
                                         {this.state.title}
                                     </Typography>
                                 </Grid>
@@ -173,14 +236,35 @@ class ElectionResults extends React.Component {
                                         {this.state.message}
                                     </Typography>
                                 </Grid>
+
+                                <Grid style={{ margin: "2px" }} justify="center" container spacing={0}>
+                                    <Typography align="center" component={'span'} color="primary">
+                                        {this.state.electionSections.map(function (value, index) {
+                                            return <Card key={index} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
+                                                <CardHeader title={value} subheader="" />
+
+                                                {this.renderElectionResultsByIndex(index).map(function (val, idx) {
+                                                    return <Card key={idx} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
+                                                        <CardContent key={idx}>
+                                                            <Typography color="textSecondary" component="p">
+                                                                {val}
+                                                            </Typography>
+                                                        </CardContent>
+                                                    </Card>;
+                                                }, this)}
+                                            </Card>;
+                                        }, this)}
+                                    </Typography>
+                                </Grid>
                             </Grid>
                         </Fade>
                     </Grid>
                 </Paper>
-            </main>
+            </main >
         );
     }
 }
+
 
 ElectionResults.propTypes = {
     classes: PropTypes.object.isRequired,

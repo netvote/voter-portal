@@ -115,7 +115,7 @@ class Login extends React.Component {
                 console.log('Election Stats: ', electionStats);
 
                 this.setState({
-                    votesCompletedMessage: (electionStats.completed === undefined ? 0 : electionStats.completed) + " Votes Cast",
+                    votesCompletedMessage: " Votes Cast " + (electionStats.complete === undefined ? 0 : electionStats.complete),
                 });
 
             })
@@ -150,7 +150,7 @@ class Login extends React.Component {
     }
 
     submitEmail() {
-        //TODO: validate email address
+        //validate email address
         nvClient.VerifyEmail(this.electionId, this.state.email).then((res) => {
             // res.message will be something if not valid
             this.setState({
