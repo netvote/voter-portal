@@ -102,10 +102,10 @@ class ElectionResults extends React.Component {
                 // tmpObj.y = `${value}`;
                 // tmpObj.x = `${count}`;
 
-                //Radius Chart
+                //Radius Chart (Donut)
                 if (count !== 0) {
                     tmpObj.angle = count;
-                    tmpObj.label = `${value}`;
+                    tmpObj.label = `${value} (${count})`;
                     // tmpObj.subLabel = `${value}`;
 
                     items.push(tmpObj);
@@ -286,7 +286,11 @@ class ElectionResults extends React.Component {
                                                         data={this.getRawResults(index)}
                                                         width={300}
                                                         height={300}
+                                                        innerRadius={100}
+                                                        radius={50}
                                                         animation={true}
+                                                        labelsAboveChildren={true}
+                                                        labelsRadiusMultiplier={1.8}
                                                         showLabels={true}
                                                     />
                                                 </Grid>
