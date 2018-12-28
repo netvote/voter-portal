@@ -6,6 +6,9 @@ import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
+import {RadialChart} from 'react-vis';
+
+
 
 //Netvote Settings
 import * as netvote_settings from '../../../config/netvote-settings';
@@ -80,16 +83,35 @@ class ElectionResults extends React.Component {
         return electionGetResults;
     }
 
-    getRawResults(results) {
-        let items = [];
+    getRawResults(_index) {
+        let items = [], electionResults = [];
 
-        let electionResults = results.ballots[results.election].results.ALL;
-        
+        let results = this.state.electionResults;
+
+        electionResults[0] = results.ballots[results.election].results.ALL[_index];
+
         electionResults.forEach(function (element) {
-            items.push(element);
-        });
 
-        console.log('Raw Results: ', items);
+            const entries = Object.entries(element);
+            console.log(entries);
+
+            for (const [value, count] of entries) {
+
+                let tmpObj = {};
+                //Bar Chart
+                // tmpObj.y = `${value}`;
+                // tmpObj.x = `${count}`;
+
+                //Radius Chart
+                if (count !== 0) {
+                    tmpObj.angle = count;
+                    tmpObj.label = `${value}`;
+                    // tmpObj.subLabel = `${value}`;
+
+                    items.push(tmpObj);
+                }
+            }
+        });
 
         return items;
     }
@@ -179,8 +201,6 @@ class ElectionResults extends React.Component {
                 // Makeshift election results rendering
                 let allResults = res.txResult.results;
 
-                // this.getRawResults(allResults);
-
                 let allSectionTitles = this.getSectionTitles(allResults);
 
                 this.setState({
@@ -218,8 +238,8 @@ class ElectionResults extends React.Component {
     }
 
     render() {
-
         const { classes } = this.props;
+
 
         return (
             <main className={classes.main}>
@@ -258,7 +278,18 @@ class ElectionResults extends React.Component {
                                     <Typography align="center" component={'span'} color="primary">
                                         {this.state.electionSections.map(function (value, index) {
                                             return <Card key={index} style={{ margin: "28px", background: "#eceaea" }} justify="center">
-                                                <CardHeader style={{ color: "#ffffffde", background: "#95dad5" }} title={value} subheader="" />
+                                                <CardHeader style={{ color: "#ffffffde", background: "#b1d5e2" }} title={value} subheader="" />
+
+
+                                                <Grid style={{ margin: "2px" }} justify="center" container spacing={0}>
+                                                    <RadialChart
+                                                        data={this.getRawResults(index)}
+                                                        width={300}
+                                                        height={300}
+                                                        animation={true}
+                                                        showLabels={true}
+                                                    />
+                                                </Grid>
 
                                                 {this.renderElectionResultsByIndex(index).map(function (val, idx) {
                                                     return <Card key={idx} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
