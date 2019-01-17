@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Typography, Fade, Paper, withStyles, Grid } from '@material-ui/core';
+import { Typography, Fade, Paper, withStyles, Grid} from '@material-ui/core';
 import logo from '../../../assets/img/brand/netvote_mark_512.png';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Card from '@material-ui/core/Card';
@@ -105,7 +105,7 @@ class ElectionResults extends React.Component {
                 //Radius Chart (Donut)
                 if (count !== 0) {
                     tmpObj.angle = count;
-                    tmpObj.label = `${value} (${count})`;
+                    tmpObj.label = `${value.replace("WRITEIN-","")} (${count})`;
                     // tmpObj.subLabel = `${value}`;
 
                     items.push(tmpObj);
@@ -141,8 +141,30 @@ class ElectionResults extends React.Component {
                 }
             }
 
-            items.push(`${value} - ${itemDescription} [Votes: ${count}]  `);
+            let name = `${value}: ${count}`
+
+            if(value.indexOf("WRITEIN") > -1){
+                items.push({name: value.substring("WRITEIN-".length)+" (write-in)", count: count})
+            } else {
+                items.push({name: value, count: count})
+            }
         }
+
+        items.sort(function(a,b){
+            if(a.count > b.count) {
+                return -1;
+            }
+            if(a.count < b.count){
+                return 1
+            }
+            if(a.name > b.name) { 
+                return 1
+            }
+            if(b.name < b.name){
+                return -1
+            }
+            return 0
+        })
 
         return items;
     }
@@ -298,9 +320,18 @@ class ElectionResults extends React.Component {
                                                 {this.renderElectionResultsByIndex(index).map(function (val, idx) {
                                                     return <Card key={idx} style={{ margin: "28px", background: "#f7f7f7" }} justify="center">
                                                         <CardContent key={idx}>
-                                                            <Typography color="textSecondary" component="p">
-                                                                {val}
-                                                            </Typography>
+                                                        <Grid container spacing={24}>
+                                                            <Grid item xs={12} sm={6}>
+                                                                <Typography align="center" color="textSecondary" variant="h6">
+                                                                    {val.name}
+                                                                </Typography>
+                                                            </Grid>
+                                                            <Grid item xs={12} sm={6}>
+                                                                <Typography align="center" color="textSecondary" variant="h4">
+                                                                {val.count}
+                                                                </Typography>
+                                                            </Grid>
+                                                        </Grid>
                                                         </CardContent>
                                                     </Card>;
                                                 }, this)}

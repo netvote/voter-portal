@@ -84,6 +84,7 @@ const getMetadata = async (electionId) => {
                 name: `${questionIdx++}`,
                 title: section.sectionTitle,
                 isRequired: true,
+                hasOther: true,
                 colCount: 1,
                 choices: []
             }
@@ -170,12 +171,21 @@ class Ballot extends React.Component {
 
     async onComplete(survey, options) {
         let choices = [];
+        console.log(JSON.stringify(survey.data))
         for (let i = 0; i < this.state.nvQuestions.length; i++) {
-            let choiceName = survey.data[`${i}`];
-            let idx = getIndexOfChoice(this.state.nvQuestions[i], choiceName);
-            choices.push({
-                selection: idx
-            })
+            let writeIn = survey.data[`${i}-Comment`];
+            if (writeIn) {
+                choices.push({
+                    writeIn: writeIn
+                })
+            }
+            else {
+                let choiceName = survey.data[`${i}`];
+                let idx = getIndexOfChoice(this.state.nvQuestions[i], choiceName);
+                choices.push({
+                    selection: idx
+                })
+            }           
         }
 
         let vote = {
@@ -183,6 +193,8 @@ class Ballot extends React.Component {
                 choices: choices
             }]
         }
+
+        console.log("submitting: "+JSON.stringify(vote))
 
         let res;
 
