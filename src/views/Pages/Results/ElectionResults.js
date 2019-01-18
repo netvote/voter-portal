@@ -184,22 +184,12 @@ class ElectionResults extends React.Component {
 
     componentDidMount = async () => {
 
-        await this.getMetadata(this.electionId).then((metadata) => {
-            this.setState({
-                metadata: metadata,
-            });
-
-            console.log(metadata);
-        })
-
-        //TODO: REMOVE FOR TESTING ONLY!!!!!!!!
+        let metadata = await this.getMetadata(this.electionId);
         this.setState({
-
-            electionStatus: 'closed',
+            metadata: metadata,
         });
-
-        console.log('electionStatus: ', this.state.electionStatus);
-
+        console.log(metadata);
+        
         //Election redirect check
         if (this.state.electionStatus === 'closed') {
 

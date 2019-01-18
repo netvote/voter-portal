@@ -87,8 +87,7 @@ class Login extends React.Component {
     }
 
     getElectionStats = async (electionId) => {
-        let electionStats = await nvClient.GetStats(electionId);
-
+        let electionStats = await nvClient.GetElectionStats(electionId);
         return electionStats.stats;
     }
 
@@ -151,6 +150,9 @@ class Login extends React.Component {
 
     submitEmail() {
         //validate email address
+        this.setState({
+            message: "Verifying email address..."
+        })
         nvClient.VerifyEmail(this.electionId, this.state.email).then((res) => {
             // res.message will be something if not valid
             this.setState({
@@ -158,6 +160,11 @@ class Login extends React.Component {
             })
             console.log(res);
 
+        }).catch((e) => {
+            console.log(e);
+            this.setState({
+                message: e.message
+            })
         })
     }
 
