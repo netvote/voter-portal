@@ -41,6 +41,11 @@ const styles = theme => ({
         width: '100%', // Fix IE 11 issue.
         disableUnderline: true
     },
+    hiddenForm: {
+        width: '100%', // Fix IE 11 issue.
+        disableUnderline: true,
+        display: 'none'
+    },
     submit: {
         marginTop: theme.spacing.unit * 3,
     },
@@ -96,7 +101,6 @@ class Login extends React.Component {
         await this.getMetadata(this.electionId).then((metadata) => {
             this.setState({
                 metadata: metadata,
-                showForm: true
             });
 
             console.log(metadata);
@@ -124,6 +128,23 @@ class Login extends React.Component {
                 voteStartMessage: (this.state.voteStartTime !== 0 ? 'Polls Open ' + getFormattedTimestamp(this.state.voteStartTime) : ""),
                 voteEndMessage: (this.state.voteEndTime !== 0 ? 'Polls Close ' + getFormattedTimestamp(this.state.voteEndTime) : ""),
             })
+
+            let now = new Date().getTime()
+            if(this.state.voteStartTime && this.state.voteStartTime > now){
+                this.setState({
+                    message: "Polls are not yet open",
+                    hideForm: true
+                })
+            } else if(this.state.voteEndTime && this.state.voteEndTime < now) {
+                this.setState({
+                    message: "Polls are now closed. Results will be available soon.",
+                    hideForm: true
+                })
+            }
+            this.setState({
+                showForm: true
+            })
+
         } else if (this.state.electionStatus === 'closed') {
             //Redirect to results page
 
@@ -225,7 +246,7 @@ class Login extends React.Component {
                                     </CardContent>
                                 </Card>
                                 <Grid style={{ margin: "20px" }} justify="center" container spacing={8}>
-                                    <Typography align="left" variant="body2" >
+                                    <Typography align="left" variant="body2" style={this.state.hideForm ? {display: 'none'} : {}} >
                                         For your security, this election requires email verification.<br /><br />
                                     </Typography>
                                     <Typography align="left" variant="body2" style={{ color: "#3f51b5" }}>
@@ -233,7 +254,7 @@ class Login extends React.Component {
                                     </Typography>
                                 </Grid>
 
-                                <form className={classes.form}>
+                                <form className={this.state.hideForm ? classes.hiddenForm : classes.form} >
                                     <FormControl required fullWidth>
                                         {/* <InputLabel htmlFor="email">Email</InputLabel> */}
                                         <TextField
