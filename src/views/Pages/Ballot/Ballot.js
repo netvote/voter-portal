@@ -65,9 +65,11 @@ const styles = theme => ({
 const getMetadata = async (electionId) => {
     let election = await nvClient.GetElection(electionId);
     let hash = election.props.metadataLocation;
+    let requireProof = election.props.requireProof;
     let metadata = await nvClient.GetFromIPFS(hash);
 
     let results = {
+        requireProof: requireProof,
         questions: [],
         metadata: metadata,
         nvQuestions: []
@@ -109,6 +111,8 @@ const getIndexOfChoice = (section, choiceTxt) => {
     throw new Error(`Cannot find ${choiceTxt} choice in ${section.sectionTitle}`)
 }
 
+let requireProof = true;
+
 
 class Ballot extends React.Component {
 
@@ -126,12 +130,14 @@ class Ballot extends React.Component {
         getMetadata(this.electionId).then((surveyObj) => {
             this.setState({
                 // To Suppress completed page add --> showCompletedPage: false
-                model: new Survey.Model({ title: surveyObj.metadata.ballotTitle, completedHtml: "Please wait, Your vote is being recorded...", questions: surveyObj.questions }),
+                model: new Survey.Model({ title: surveyObj.metadata.ballotTitle, completedHtml: "<div class='lds-ring'><div></div><div></div><div></div><div></div></div><div><br/>Please wait, Your vote is being recorded...</div>", questions: surveyObj.questions }),
                 metadata: surveyObj.metadata,
                 nvQuestions: surveyObj.nvQuestions,
                 showForm: true,
                 complete: false
             });
+
+            requireProof = surveyObj.requireProof;
 
             console.log(surveyObj);
         })
@@ -156,7 +162,14 @@ class Ballot extends React.Component {
 
         return new Promise((resolve, reject) => {
             setTimeout(async function () {
-                let res = await nvClient.CastSignedVote(electionId, token, vote);
+                let res;
+                if(requireProof) {
+                    console.log("cast signed vote")
+                    res = await nvClient.CastSignedVote(electionId, token, vote);
+                } else {
+                    console.log("cast vote")
+                    res = await nvClient.CastVote(electionId, token, vote)
+                }
                 if (res.txStatus === "complete" || res.txStatus === "pending") {
                     // everything is good
                     resolve(res.txStatus)

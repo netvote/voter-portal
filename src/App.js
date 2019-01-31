@@ -1,3 +1,6 @@
+import 'react-app-polyfill/ie9';
+import 'core-js'
+import 'raf/polyfill';
 import React, { Component } from 'react';
 import { Switch, HashRouter as Router, Route } from 'react-router-dom'
 import './App.css';
@@ -12,6 +15,7 @@ import ExpiredError from './views/Pages/ExpiredError';
 import ElectionResults from './views/Pages/Results';
 
 class App extends Component {
+  
   render() {
     window.__MUI_USE_NEXT_TYPOGRAPHY_VARIANTS__ = true;
 
