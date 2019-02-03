@@ -130,7 +130,7 @@ class Ballot extends React.Component {
         getMetadata(this.electionId).then((surveyObj) => {
             this.setState({
                 // To Suppress completed page add --> showCompletedPage: false
-                model: new Survey.Model({ title: surveyObj.metadata.ballotTitle, completedHtml: "<div class='lds-ring'><div></div><div></div><div></div><div></div></div><div><br/>Please wait, Your vote is being recorded...</div>", questions: surveyObj.questions }),
+                model: new Survey.Model({ title: surveyObj.metadata.ballotTitle, completedHtml: "<div class='lds-ring'><div></div><div></div><div></div><div></div></div><div><br/>Please wait, Your vote is being signed and recorded.<br/> It can take a few minutes to complete the secure process.<br/>In older browsers, the screen may become unresponsive for several seconds.</div>", questions: surveyObj.questions }),
                 metadata: surveyObj.metadata,
                 nvQuestions: surveyObj.nvQuestions,
                 showForm: true,
@@ -162,23 +162,26 @@ class Ballot extends React.Component {
 
         return new Promise((resolve, reject) => {
             setTimeout(async function () {
-                let res;
-                if(requireProof) {
-                    console.log("cast signed vote")
-                    res = await nvClient.CastSignedVote(electionId, token, vote);
-                } else {
-                    console.log("cast vote")
-                    res = await nvClient.CastVote(electionId, token, vote)
+                try{
+                    let res;
+                    if(requireProof) {
+                        console.log("cast signed vote")
+                        res = await nvClient.CastSignedVote(electionId, token, vote);
+                    } else {
+                        console.log("cast vote")
+                        res = await nvClient.CastVote(electionId, token, vote)
+                    }
+                    if (res.txStatus === "complete" || res.txStatus === "pending") {
+                        // everything is good
+                        resolve(res.txStatus)
+                    } else {
+                        // an error occured, or vote is a duplicate
+                        reject(res.message)
+                    }
+                } catch(e){
+                    reject(e.message)
                 }
-                if (res.txStatus === "complete" || res.txStatus === "pending") {
-                    // everything is good
-                    resolve(res.txStatus)
-                } else {
-                    // an error occured, or vote is a duplicate
-                    reject(res.message)
-                }
-
-            }, 10)
+            }, 250)
         })
     }
 

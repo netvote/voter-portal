@@ -5,6 +5,7 @@ import logo from '../../../assets/img/brand/netvote_mark_512.png';
 import NetvoteAPIs from '@netvote/netvote-api-sdk'
 import Send from '@material-ui/icons/Send';
 import * as moment from 'moment';
+import * as Bowser from "bowser"; 
 
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
@@ -12,7 +13,7 @@ import CardContent from '@material-ui/core/CardContent';
 //Netvote Settings
 import * as netvote_settings from '../../../config/netvote-settings';
 const nvClient = NetvoteAPIs.initVoterClient(netvote_settings.NETVOTE_API_KEY);
-
+const browser = Bowser.getParser(window.navigator.userAgent);
 
 const styles = theme => ({
     main: {
@@ -85,9 +86,22 @@ class Login extends React.Component {
             electionAuthType: election.authType,
         });
 
+        if(election.props.requireProof){
+            let notSupported = browser.satisfies({
+                windows: {
+                "internet explorer": "<11",
+                }
+            });
+            
+            if(notSupported){
+                this.setState({
+                    badBrowser: notSupported,
+                    message: `${browser.getBrowserName()} ${browser.getBrowserVersion()} is not supported.  This election requires cryptographic features available in modern browsers.`
+                })
+            }
+        }
+
         let metadata = await nvClient.GetFromIPFS(hash);
-
-
         return metadata;
     }
 
@@ -107,7 +121,8 @@ class Login extends React.Component {
         })
 
         console.log('electionStatus: ', this.state.electionStatus);
-        console.log('electionAuthType: ', this.state.electionAuthType);
+        console.log('electionAuthType: ', this.state.electionAuthType);        
+        console.log(`browser: ${browser.getBrowserName()} ${browser.getBrowserVersion()}`);
 
         //Election redirect check
         if (this.state.electionStatus === 'voting' && this.state.electionAuthType === 'email') {
@@ -194,6 +209,11 @@ class Login extends React.Component {
         this.setState({ email: event.target.value })
     }
 
+    _handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+          this.submitEmail();
+        }
+    }
 
     render() {
 
@@ -246,7 +266,7 @@ class Login extends React.Component {
                                     </CardContent>
                                 </Card>
                                 <Grid style={{ margin: "20px" }} justify="center" container spacing={8}>
-                                    <Typography align="left" variant="body2" style={this.state.hideForm ? {display: 'none'} : {}} >
+                                    <Typography align="left" variant="body2" style={(this.state.hideForm || this.state.badBrowser) ? {display: 'none'} : {}} >
                                         For your security, this election requires email verification.<br /><br />
                                     </Typography>
                                     <Typography align="left" variant="body2" style={{ color: "#3f51b5" }}>
@@ -254,7 +274,7 @@ class Login extends React.Component {
                                     </Typography>
                                 </Grid>
 
-                                <form className={this.state.hideForm ? classes.hiddenForm : classes.form} >
+                                <form onSubmit={e => { e.preventDefault(); }} className={(this.state.hideForm || this.state.badBrowser) ? classes.hiddenForm : classes.form} >
                                     <FormControl required fullWidth>
                                         {/* <InputLabel htmlFor="email">Email</InputLabel> */}
                                         <TextField
@@ -262,6 +282,7 @@ class Login extends React.Component {
                                             label="Email Address"
                                             className={classes.textField}
                                             margin="normal"
+                                            onKeyPress={this._handleKeyPress}
                                             onChange={this.updateEmail}
                                         />
                                     </FormControl>
