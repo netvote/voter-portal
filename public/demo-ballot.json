@@ -1,0 +1,36 @@
+{
+    "type": "basic",
+    "ballotTitle": "Simple Demo",
+    "ballotLocation": "",
+    "ballotDate": "",
+    "ballotImage": "",
+    "featuredImage": "",
+    "ballotInformation": "This is a demo election",
+    "ballotGroups": [{
+        "groupTitle": "Simple Ballot",
+        "ballotSections": [{
+            "type": "single",
+            "sectionTitle": "Representative",
+            "sectionTitleNote": "Select One Candidate",
+            "ballotItems": [{
+                "itemTitle": "John Smith",
+                "itemDescription": "Tiger Party"
+            }, {
+                "itemTitle": "Sally Gutierrez",
+                "itemDescription": "Giraffe Party"
+            }, {
+                "itemTitle": "Tyrone Williams",
+                "itemDescription": "Dolphin Party"
+            }]
+        }, {
+            "type": "single",
+            "sectionTitle": "Proposition 33B",
+            "sectionTitleNote": "Do you support Prop 33B?",
+            "ballotItems": [{
+                "itemTitle": "Yes"
+            }, {
+                "itemTitle": "No"
+            }]            
+        }]
+    }]
+}
