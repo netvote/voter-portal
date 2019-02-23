@@ -1,5 +1,5 @@
 # Voter Portal
-A generic voter portal web application
+A generic voter portal demo web application for Netvote using email voter registration and verification
 
 ## Overview:
 * Shall provide support for public email verification & casting votes
